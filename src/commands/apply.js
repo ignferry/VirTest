@@ -2,8 +2,8 @@ import { Command } from 'commander';
 import { extname, join } from 'path';
 import { parseAllDocuments, parseDocument, stringify } from 'yaml';
 import { access, constants, mkdir, readdir, readFile, rm, stat, writeFile } from 'fs/promises';
-import { exec } from 'node:child_process';
 import { getCurrentPath, getToolPath } from '../utils/path.js';
+import { applyManifest } from '../utils/kubernetes.js';
 import { error } from 'console';
 
 export const applyCommand = new Command()
@@ -134,11 +134,6 @@ export async function applyDeployment(config) {
         const mbDeploymentManifest = parseDocument(deploymentFileContent).toJSON();
         components.get('Deployment').set('mountebank', mbDeploymentManifest);
 
-        const mbServiceManifestPath = join(getToolPath(), 'templates', 'mountebank-service.yaml');
-        const serviceFileContent = await readFile(mbServiceManifestPath, 'utf-8');
-        const mbServiceManifest = parseDocument(serviceFileContent).toJSON();
-        components.get('Service').set('mountebank', mbServiceManifest);
-
         // Create mountebank configmap component with config file and protos
         const configMapManifest = {
             apiVersion: 'v1',
@@ -180,7 +175,8 @@ export async function applyDeployment(config) {
                                 proxy: {
                                     to: `${serviceConfigDetail['virtual-service'].proxy['service-name']}:${serviceConfigDetail['virtual-service'].port}`,
                                     mode: 'proxyAlways',
-                                    predicateGenerators: [{ matches: { path: true } }]
+                                    predicateGenerators: [{ matches: { path: true } }],
+                                    addWaitBehavior: true
                                 }
                             }]
                         }]
@@ -213,6 +209,15 @@ export async function applyDeployment(config) {
     }
 
     // If otel enabled, add otel manifest
+    // UNIMPLEMENTED
+
+    // 
+    for (let [_, componentMap] of components) {
+        for (let [_, manifest] of componentMap) {
+            await applyManifest(manifest);
+        }
+    }
+
 
     // Create yaml on user directory
     let fileContent = '';
@@ -223,9 +228,6 @@ export async function applyDeployment(config) {
     }
 
     await writeFile(join(getCurrentPath(), 'virtest/manifest.yaml'), fileContent, 'utf-8');
-
-    // Apply kubectl manifest
-    exec('kubectl apply -f virtest/manifest.yaml');
 }
 
 async function retrieveComponentsFromManifest(path, componentsMap) {

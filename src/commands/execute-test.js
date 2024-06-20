@@ -9,6 +9,8 @@ export const executeTestCommand = new Command()
 export async function executeTestScript(scriptPath) {
     try {
         console.log('Execute test script - UNIMPLEMENTED');
+
+        // Run K6
     } catch (err) {
         console.log('Error executing test script', err);
         process.exit();

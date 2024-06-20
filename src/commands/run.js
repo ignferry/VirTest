@@ -9,6 +9,11 @@ export const runCommand = new Command()
 export async function runTest(configPath = 'config.yaml') {
     try {
         console.log('Run test - UNIMPLEMENTED');
+        // Apply
+
+        // Execute
+
+        // Delete
     } catch (err) {
         console.log('Error running test', err);
         process.exit();

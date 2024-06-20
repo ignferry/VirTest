@@ -18,6 +18,7 @@
   "homepage": "https://github.com/ignferry/VirTest#readme",
   "dependencies": {
     "@kubernetes/client-node": "^0.21.0",
+    "axios": "^1.7.2",
     "commander": "^12.1.0",
     "yaml": "^2.4.5"
   },
