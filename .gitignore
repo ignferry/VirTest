@@ -1,1 +1,6 @@
 /node_modules
+manifest.yaml
+test.yaml
+/virtual-services
+/proto
+/virtest

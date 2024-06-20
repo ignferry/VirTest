@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mountebank
+  labels: 
+    app.kubernetes.io/name: mountebank
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mountebank
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mountebank
+    spec:
+      volumes:
+      - name: mountebank-volume
+        configMap:
+          name: mountebank
+          defaultMode: 420
+      containers:
+      - image: ignferry/mountebank:latest
+        name: mountebank
+        ports:
+        - containerPort: 2525
+        volumeMounts: 
+        - name: mountebank-volume
+          mountPath: /app/virtest
+

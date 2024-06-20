@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'url';
-import { resolve, dirname } from 'path';
+import { resolve } from 'path';
 
 export function getToolPath() {
     const currentFilePath = fileURLToPath(import.meta.url);
