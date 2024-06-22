@@ -1,11 +1,11 @@
 import { Command } from 'commander';
 import { join } from 'path';
-import { parseDocument, stringify } from 'yaml';
-import { access, constants, mkdir, readFile, rm, writeFile } from 'fs/promises';
+import { stringify } from 'yaml';
+import { access, constants, mkdir, rm, writeFile } from 'fs/promises';
 import { getCurrentPath } from '../utils/path.js';
 import { applyManifest } from '../utils/kubernetes.js';
 import { error } from 'console';
-import { getConfiguredManifestsMap } from '../utils/config.js';
+import { getConfiguredManifestsMap, readAppConfig } from '../utils/config.js';
 
 export const applyCommand = new Command()
     .name('apply')
@@ -14,9 +14,7 @@ export const applyCommand = new Command()
     .action(async (configPath = 'config.yaml') => {
         // Read config file
         try {
-            const configFullPath = join(getCurrentPath(), configPath);
-            const fileContent = await readFile(configFullPath, 'utf-8');
-            const config = parseDocument(fileContent).toJSON();
+            const config = await readAppConfig(configPath);
     
             await applyDeployment(config);
         } catch (err) {
@@ -59,4 +57,6 @@ export async function applyDeployment(config) {
             await applyManifest(manifest);
         }
     }
+
+    console.log('Manifest apply commands have been sent based on given config file. Please wait until all deployments are ready before running tests')
 }

@@ -4,7 +4,7 @@ import { readdir, readFile, stat, } from 'fs/promises';
 import { getCurrentPath, getToolPath } from './path.js';
 
 export async function readAppConfig(path) {
-    const configFullPath = join(getCurrentPath(), configPath);
+    const configFullPath = join(getCurrentPath(), path);
     const fileContent = await readFile(configFullPath, 'utf-8');
     return parseDocument(fileContent).toJSON();
 }
@@ -186,7 +186,7 @@ export async function getConfiguredManifestsMap(config) {
     return components;
 }
 
-async function retrieveComponentsFromManifest(path, componentsMap) {
+export async function retrieveComponentsFromManifest(path, componentsMap) {
     const manifestPathStats = await stat(path);
 
     if (manifestPathStats.isFile()) {
