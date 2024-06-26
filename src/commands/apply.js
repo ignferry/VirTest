@@ -52,9 +52,14 @@ export async function applyDeployment(config) {
     }
 
     // Apply manifest
-    for (let [_, componentMap] of components) {
+    for (let [kind, componentMap] of components) {
         for (let [_, manifest] of componentMap) {
-            await applyManifest(manifest);
+            try {
+                await applyManifest(manifest);
+                console.log(`Applied ${kind}: ${manifest?.metadata?.name}`);
+            } catch (err) {
+                console.log(`Error applying manifest ${manifest?.metadata?.name}`, err.message);
+            }
         }
     }
 

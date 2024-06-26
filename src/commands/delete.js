@@ -25,9 +25,14 @@ export const deleteCommand = new Command()
 
 export async function deleteDeployment(components) {
     try {
-        for (let [_, componentMap] of components) {
+        for (let [kind, componentMap] of components) {
             for (let [_, manifest] of componentMap) {
-                await deleteManifest(manifest);
+                try {
+                    await deleteManifest(manifest);
+                    console.log(`Deleted ${kind}: ${manifest?.metadata?.name}`);
+                } catch (err) {
+                    console.log(`Error deleting manifest ${manifest?.metadata?.name}`, err.message);
+                }
             }
         }
 

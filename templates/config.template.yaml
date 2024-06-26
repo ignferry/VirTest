@@ -1,9 +1,9 @@
 observability: 
   deploy: true
+  test-id: sample-test-id
   grafana–cloud:
-    api-key: xxx
-    org-slug: xxx
-    region: xxx
+    username: xxx
+    password: xxx
 scenario:
   path: scenarios/example-scenario/index.js
 service:
@@ -14,17 +14,22 @@ service:
       name: exampleservice1
       enabled: false
     virtual-service:
+      transport: http
       path: /virtual-services/example-service-1.json
-      replace: true
-      create-proxy: false
+      port: 5000
+      enabled: false
   example-service-2:
     service-component:
       name: exampleservice2
     virtual-service:
+      transport: http
       protocol: grpc
-      protofile-path: /proto/example-service-2.proto # Proto file is required for grpc virtual service to work
-      proto-service-name: ExampleService2 
-      name: example-service-2
-      replace: false
-      create-proxy: true
-      save-proxy-result: true
+      grpc:
+        protofile-path: /proto/demo.proto
+        proto-service-name: exampleservice2
+      enabled: true
+      port: 5001
+      proxy: 
+        auto-create: true
+        save-result: true
+        service-name: replaced-exampleservice2

@@ -172,16 +172,45 @@ export async function getConfiguredManifestsMap(config) {
             }
         }
         configMapManifest.data['mbconfig.json'] = JSON.stringify({ imposters }, null, 2);
-        
-        if (components.has('ConfigMap')) {
-            components.get('ConfigMap').set('mountebank', configMapManifest);
-        } else {
-            components.set('ConfigMap', new Map([configMapManifest]));
-        }
+
+        addToComponentsMap(components, configMapManifest);
     }
 
     // If otel enabled, add otel manifest
-    // UNIMPLEMENTED
+    if (config.observability?.deploy) {
+        const grafanaCloudCredentials = config.observability['grafana-cloud'];
+        if (!(grafanaCloudCredentials?.username) || !(grafanaCloudCredentials?.password)) {
+            throw new Error('Grafana Cloud username, password, and otlp endpoint is required for observability components to run');
+        }
+        if (!config.observability['test-id']) {
+            throw new Error('Test ID needs to be specified for observability components to run');
+        }
+
+        const otelcolManifestPath = join(getToolPath(), 'templates', 'otelcol-agent.yaml');
+        const otelcolManifestFileContent = await readFile(otelcolManifestPath, 'utf-8');
+        const otelcolManifests = parseAllDocuments(otelcolManifestFileContent);
+
+        for (let manifest of otelcolManifests) {
+            manifest = manifest.toJSON();
+            if (manifest.kind === 'Secret') {
+                manifest.data.username = Buffer.from(grafanaCloudCredentials.username).toString('base64');
+                manifest.data.password = Buffer.from(grafanaCloudCredentials.password).toString('base64');
+                manifest.data['otlp-endpoint'] = Buffer.from(grafanaCloudCredentials['otlp-endpoint']).toString('base64');
+            }
+
+            if (manifest.kind === 'DaemonSet'){
+                for (const env of  manifest.spec.template.spec.containers[0].env) {
+                    if (env.name === 'TEST_RUN_ID') {
+                        env.value = config.observability['test-id'];
+                        break;
+                    }
+                }
+               
+            }
+
+            addToComponentsMap(components, manifest);
+        }
+    }
 
     return components;
 }
@@ -194,15 +223,9 @@ export async function retrieveComponentsFromManifest(path, componentsMap) {
         if (extension === '.yaml' || extension === '.yml') {
             const fileContent = await readFile(path, 'utf-8');
             parseAllDocuments(fileContent).forEach(rawdoc => {
-                const doc = rawdoc.toJSON();
-                if (doc) {
-                    const kind = doc.kind;
-
-                    if (!componentsMap.has(kind)) {
-                        componentsMap.set(kind, new Map([[doc.metadata.name, doc]]));
-                    } else {
-                        componentsMap.get(kind).set(doc.metadata.name, doc);
-                    }
+                const manifest = rawdoc.toJSON();
+                if (manifest) {
+                    addToComponentsMap(componentsMap, manifest);
                 }
             })
         }
@@ -212,5 +235,13 @@ export async function retrieveComponentsFromManifest(path, componentsMap) {
             await retrieveComponentsFromManifest(filePath, componentsMap);
         });
         await Promise.all(promises);
+    }
+}
+
+function addToComponentsMap(map, manifest) {
+    if (!map.has(manifest.kind)) {
+        map.set(manifest.kind, new Map([[manifest.metadata.name, manifest]]));
+    } else {
+        map.get(manifest.kind).set(manifest.metadata.name, manifest);
     }
 }
