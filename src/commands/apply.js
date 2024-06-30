@@ -3,7 +3,7 @@ import { join } from 'path';
 import { stringify } from 'yaml';
 import { access, constants, mkdir, rm, writeFile } from 'fs/promises';
 import { getCurrentPath } from '../utils/path.js';
-import { applyManifest } from '../utils/kubernetes.js';
+import { applyManifest, isNamespaceAvailable } from '../utils/kubernetes.js';
 import { error } from 'console';
 import { getConfiguredManifestsMap, readAppConfig } from '../utils/config.js';
 
@@ -51,11 +51,20 @@ export async function applyDeployment(config) {
         await writeFile(join(getCurrentPath(), 'virtest/mbconfig.json'), components.get('ConfigMap').get('mountebank').data['mbconfig.json'], 'utf-8');
     }
 
+    // Check if namespace is available
+    const namespace = config.manifests.namespace;
+    if (!namespace) {
+        throw new Error('Namespace name not specified');
+    }
+    if (!(await isNamespaceAvailable(namespace))) {
+        throw new Error('Namespace does not exist in the cluster');
+    }
+
     // Apply manifest
     for (let [kind, componentMap] of components) {
         for (let [_, manifest] of componentMap) {
             try {
-                await applyManifest(manifest);
+                await applyManifest(manifest, namespace);
                 console.log(`Applied ${kind}: ${manifest?.metadata?.name}`);
             } catch (err) {
                 console.log(`Error applying manifest ${manifest?.metadata?.name}`, err.message);

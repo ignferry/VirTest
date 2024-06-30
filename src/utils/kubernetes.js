@@ -47,3 +47,12 @@ export async function portForward(pod, targetPort, localPort, namespace = 'defau
 export async function listPods(labelSelector, namespace = 'default') {
     return await api.listNamespacedPod(namespace, undefined, undefined, undefined, undefined, labelSelector);
 }
+
+export async function isNamespaceAvailable(namespace) {
+    try {
+        await api.readNamespace(namespace);
+        return true;
+    } catch {
+        return false;
+    }
+}

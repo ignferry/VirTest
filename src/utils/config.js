@@ -15,6 +15,9 @@ export async function getConfiguredManifestsMap(config) {
     if (!config.manifests.path) {
         throw new Error('Manifest file or folder not specified');
     }
+    if (!config.manifests.namespace) {
+        throw new Error('Namespace name not specified');
+    }
 
     const manifestFullPath = join(getCurrentPath(), config.manifests.path);
     const manifestPathStats = await stat(manifestFullPath);
@@ -202,10 +205,16 @@ export async function getConfiguredManifestsMap(config) {
                 for (const env of  manifest.spec.template.spec.containers[0].env) {
                     if (env.name === 'TEST_RUN_ID') {
                         env.value = config.observability['test-id'];
-                        break;
+                    }
+                    if (env.name === 'NAMESPACE_NAME') {
+                        env.value = config.manifests.namespace;
                     }
                 }
                
+            }
+
+            if (manifest.kind === 'ClusterRoleBinding') {
+                manifest.subjects[0].namespace = config.manifests.namespace;
             }
 
             addToComponentsMap(components, manifest);

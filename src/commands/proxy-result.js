@@ -44,8 +44,16 @@ export async function retrieveProxyResult(config) {
         return;
     }
 
+    const namespace = config.manifests.namespace;
+    if (!namespace) {
+        throw new Error('Namespace name not specified');
+    }
+    if (!(await isNamespaceAvailable(namespace))) {
+        throw new Error('Namespace does not exist in the cluster');
+    }
+
     // Start port forwarding to mountebank service
-    const pods = await listPods('app.kubernetes.io/name=mountebank');
+    const pods = await listPods('app.kubernetes.io/name=mountebank', namespace);
     if (pods.length === 0) {
         throw new Error('Mountebank pods not found');
     }
