@@ -1,6 +1,5 @@
 import { Command } from 'commander';
-import { getCurrentPath } from '../utils/path.js';
-import { getConfiguredManifestsMap, readAppConfig, retrieveComponentsFromManifest } from '../utils/config.js';
+import { getConfiguredManifestsMap, readAppConfig } from '../utils/config.js';
 import { deleteManifest, isNamespaceAvailable } from '../utils/kubernetes.js';
 
 export const deleteCommand = new Command()
@@ -10,30 +9,25 @@ export const deleteCommand = new Command()
     .action(async (configPath = 'config.yaml') => {
         try {
             const config = await readAppConfig(configPath);
-            // Check if namespace is available
-            const namespace = config.manifests.namespace;
-            if (!namespace) {
-                throw new Error('Namespace name not specified');
-            }
-            if (!(await isNamespaceAvailable(namespace))) {
-                throw new Error('Namespace does not exist in the cluster');
-            }
-
-            try {
-                const components = new Map();
-                retrieveComponentsFromManifest(join(getCurrentPath(), 'virtest', 'manifest.yaml'), components);
-                deleteDeployment(components, namespace);
-            } catch (err) {
-                console.log('Error deleting from previously generated manifest. Generating new manifest from config file');
-                deleteDeployment(await getConfiguredManifestsMap(config), namespace);
-            }
+            deleteDeployment(config);
         } catch (err) {
             console.log('Error deleting deployment', err);
             process.exit(); 
         }
     });
 
-export async function deleteDeployment(components, namespace) {
+export async function deleteDeployment(config) {
+    // Check if namespace is available
+    const namespace = config.manifests.namespace;
+    if (!namespace) {
+        throw new Error('Namespace name not specified');
+    }
+    if (!(await isNamespaceAvailable(namespace))) {
+        throw new Error('Namespace does not exist in the cluster');
+    }
+
+    const components = await getConfiguredManifestsMap(config);
+
     for (let [kind, componentMap] of components) {
         for (let [_, manifest] of componentMap) {
             try {

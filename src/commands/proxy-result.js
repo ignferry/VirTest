@@ -3,7 +3,7 @@ import { readFile, writeFile } from 'fs/promises';
 import { join } from 'path';
 import { parseDocument} from 'yaml';
 import axios from 'axios';
-import { listPods, portForward } from '../utils/kubernetes.js';
+import { listPods, portForward, isNamespaceAvailable } from '../utils/kubernetes.js';
 import { getCurrentPath } from '../utils/path.js';
 
 export const proxyResultCommand = new Command()
@@ -58,7 +58,7 @@ export async function retrieveProxyResult(config) {
         throw new Error('Mountebank pods not found');
     }
 
-    const pf = await portForward(pods.body.items[0].metadata.name, 2525, 2525);
+    const pf = await portForward(pods.body.items[0].metadata.name, 2525, 2525, namespace);
 
     // Get proxy result of services and write to current directory
     for (const service of toSaveProxyServices) {
@@ -79,6 +79,19 @@ export async function retrieveProxyResult(config) {
         if (service.detail['virtual-service'].proxy['auto-create']) {                                    
             proxyResult.recordRequests = false;
             proxyResult.stubs.shift();
+        }
+
+        if (service.detail['virtual-service'].grpc) {
+            proxyResult.options = {
+                protobufjs: {
+                    includeDirs: ['/app/virtest'],
+                }
+            }
+
+            proxyResult.services = {};
+            proxyResult.services[`${service.detail['virtual-service'].grpc['proto-service-name']}`] = {
+                file: `${service.name}.proto`
+            }
         }
 
         service.proxyResult = proxyResult;
