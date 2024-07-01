@@ -203,6 +203,10 @@ data:
         send_batch_max_size: 400
         timeout: 15s
         send_batch_size: 200
+      batch/traces:
+        send_batch_max_size: 50
+        timeout: 3s
+        send_batch_size: 25
       metricstransform:
         transforms:
           include: .+
@@ -286,7 +290,7 @@ data:
           - zipkin
           processors:
           - k8sattributes
-          - batch
+          - batch/traces
           exporters: 
           - otlphttp
         metrics/application:
