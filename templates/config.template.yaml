@@ -4,28 +4,37 @@ observability:
   grafana–cloud:
     username: xxx
     password: xxx
-scenario:
-  path: scenarios/example-scenario/index.js
+    otlp-endpoint: xxx
+manifests:
+  path: manifest.yaml
+  namespace: default
 service:
   example-service-1:
     service-component:
-      name: exampleservice1
+      name: example-service-1
     deployment-component:
-      name: exampleservice1
+      name: example-service-1
       enabled: false
-    virtual-service:
-      transport: http
-      path: /virtual-services/example-service-1.json
-      port: 5000
-      enabled: false
-  example-service-2:
-    service-component:
-      name: exampleservice2
     virtual-service:
       transport: http
       protocol: grpc
       grpc:
-        protofile-path: /proto/demo.proto
+        protofile-path: /proto/example.proto
+        proto-service-name: exampleservice1
+      path: /example-service-1.json
+      enabled: true
+      port: 5000
+  example-service-2:
+    service-component:
+      name: example-service-2
+    deployment-component:
+      name: example-service-2
+      enabled: true
+    virtual-service:
+      transport: http
+      protocol: grpc
+      grpc:
+        protofile-path: /proto/example.proto
         proto-service-name: exampleservice2
       enabled: true
       port: 5001
