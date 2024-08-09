@@ -8,7 +8,7 @@ observability:
 manifests:
   path: manifest.yaml
   namespace: default
-service:
+services:
   example-service-1:
     service-component:
       name: example-service-1

@@ -1,6 +1,6 @@
 {
   "name": "@ignferry/virtest",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Performance testing tool for microservices deployed in Kubernetes, with support of Mountebank virtual service",
   "main": "src/index.js",
   "scripts": {

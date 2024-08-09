@@ -4,7 +4,7 @@ import { deleteManifest, isNamespaceAvailable } from '../utils/kubernetes.js';
 
 export const deleteCommand = new Command()
     .name('delete')
-    .description('deletes an application deployment in Kubernetes based on config file and manifests (auto-generated manifest will be used first)')
+    .description('deletes an application deployment in Kubernetes based on config file and manifests')
     .argument('[configPath]', 'config file path')
     .action(async (configPath = 'config.yaml') => {
         try {
